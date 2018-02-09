@@ -1,0 +1,10 @@
+name: prosumpy
+
+dependencies:
+  - numpy>=1.10
+  - scipy>=0.15
+  - matplotlib>=1.5.1
+  - pandas>= 0.18
+  - pytest
+  - pytest-cov
+  - coverage
