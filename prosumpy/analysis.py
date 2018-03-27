@@ -3,12 +3,15 @@
 import numpy as np
 
 def print_analysis(pv, demand, param, E):
-    """Print statistics and information of the dispatched solution
+    """ Print statistics and information of the dispatched solution
+
     Arguments
         pv (pd.Series): PV timeseries
         demand (pd.Series): demand timeseries
         param (dict): dictionary of technical parameters
         E (dict): dictionary of energy flows as estimated by the algorithm
+    Returns
+        none
 
     """
     timestep = param['timestep']

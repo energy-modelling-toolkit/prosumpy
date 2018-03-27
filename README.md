@@ -8,6 +8,9 @@ prosumpy - Energy prosumer analysis toolkit for python
 A toolkit for the simulation and economic evaluation of self-consumption and solar home battery systems.
 The code is written in Python. 
 
+A photovoltaic and storage (battery) system is consider as a means to cover the needs of an end user. The model contains the logic to dispatch the energy based on given conditions and rules for the following energy flow chart:
+
+![Energy flows](./docs/_static/pv_flow.png)
 
 ## Quick start
 An [example notebook](https://github.com/energy-modelling-toolkit/prosumpy/blob/master/notebooks/Basic%20example.ipynb) has been added to demonstrate the usage of this library.
