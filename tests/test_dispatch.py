@@ -1,30 +1,32 @@
-from prosumpy import dispatch_max_sc
+from prosumpy import dispatch_max_sc, dispatch_perfect_forecast
 import numpy as np
 import pandas as pd
 
 import pytest
 from collections import namedtuple
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def data():
     Data = namedtuple('data', ['pv', 'demand', 'param_tech'])
     param_tech = {'BatteryCapacity': 30,
-                 'BatteryEfficiency': 1,
+                 'BatteryEfficiency': .9,
                  'InverterEfficiency': .9,
                  'timestep': 0.25,
                  'MaxPower': 45}
-    demand = pd.read_csv('./tests/data/demand_example.csv', index_col=0, header=None, squeeze=True)
-    pv = pd.read_csv('./tests/data/pv_example.csv', index_col=0, header=None, squeeze=True)
+    demand = pd.read_csv('./tests/data/demand_example.csv', index_col=0, header=None, parse_dates=True, squeeze=True)
+    pv = pd.read_csv('./tests/data/pv_example.csv', index_col=0, header=None, parse_dates=True, squeeze=True)
     pv = pv * 10
     return Data(pv, demand, param_tech)
 
-@pytest.fixture(scope='module', params=[dispatch_max_sc])
+@pytest.fixture(scope='module',
+                params=[dispatch_max_sc, dispatch_perfect_forecast],
+                ids=['max_selfconsume', 'perfect_forecast'])
 def model_results(request, data):
     return request.param(data.pv, data.demand, data.param_tech)
 
 
-# Tests to validate that any dispatch strategy is valid.
-# All node balances have to be equal to  zero
+# The following fucntions are tests to validate that any dispatch strategy is valid.
+# All node balances have to be equal to zero
 def test_pv_balance(data, model_results):
     E = model_results
     assert np.isclose(sum(data.pv - E['pv2inv'] - E['pv2store']),0)
