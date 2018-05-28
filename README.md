@@ -10,7 +10,7 @@ The code is written in Python.
 
 A photovoltaic and storage (battery) system is consider as a means to cover the needs of an end user. The model contains the logic to dispatch the energy based on given conditions and rules for the following energy flow chart:
 
-![Energy flows](./docs/_static/pv_flows.png)
+![Energy flows](https://github.com/energy-modelling-toolkit/prosumpy/blob/master/docs/_static/pv_flows.png)
 
 The energy flows names correspond to the variable names estimated by the model. The grey circles correspond to the meters found in such installations. These meters are used to implement different pricing policies:
 1. Feed in Tarriff or Power Purchase Agreement meter
