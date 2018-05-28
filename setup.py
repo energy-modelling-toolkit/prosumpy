@@ -23,7 +23,8 @@ version = prosumpy.__version__
 
 requirements = ['numpy>=1.10',
                 'matplotlib>=1.5.1',
-                'pandas>=0.18']
+                'pandas>=0.18',
+                'scipy>=0.6']
 
 setup(
     name="prosumpy",

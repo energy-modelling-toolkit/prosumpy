@@ -60,10 +60,7 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
     for i in range(1,Nsteps):
         #PV to storage
         if LevelOfCharge[i-1] >= bat_size_e_adj:  # if battery is full
-            if res_load[i] == 0:  # if there is no demand uncovered
                 pv2store[i] = 0
-            else:
-                pv2store[i] = min(res_pv[i] * n_bat, bat_size_p_adj)
         else: #if battery is not full
             if LevelOfCharge[i-1] + res_pv[i] * n_bat * timestep > bat_size_e_adj:  # if battery will be full after putting excess
                 pv2store[i] = min((bat_size_e_adj - LevelOfCharge[i-1]) / timestep, bat_size_p_adj)
@@ -109,7 +106,7 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
 
 
 
-def dispatch_perfect_forecast(pv, demand, param_tech, return_series=False):
+def dispatch_max_sc_grid_pf(pv, demand, param_tech, return_series=False):
     """
     Battery dispatch algorithm.
     The dispatch of the storage capacity is performed in such a way to maximize self-consumption and relief the grid by
@@ -129,7 +126,6 @@ def dispatch_perfect_forecast(pv, demand, param_tech, return_series=False):
     :return: Dictionary of Time series
 
     """
-    pv_val = pv.values
     bat_size_e_adj = param_tech['BatteryCapacity']
     bat_size_p_adj = param_tech['MaxPower']
     n_bat = param_tech['BatteryEfficiency']
@@ -156,9 +152,9 @@ def dispatch_perfect_forecast(pv, demand, param_tech, return_series=False):
 
         def get_residual_peak(thres):
             shaved_peak = np.maximum(pv_day_load - thres, 0)
-            return sum(shaved_peak) * param_tech['timestep'] - param_tech['BatteryCapacity']
+            return sum(shaved_peak) * param_tech['timestep'] - bat_size_e
 
-        if sum(pv_day_load) * param_tech['timestep'] <= param_tech['BatteryCapacity']:  # if the battery can cover the whole day
+        if sum(pv_day_load) * param_tech['timestep'] <= bat_size_e:  # if the battery can cover the whole day
             return 0
         else:
             return brentq(get_residual_peak, 0, max(pv), rtol=1e-4)
@@ -173,38 +169,36 @@ def dispatch_perfect_forecast(pv, demand, param_tech, return_series=False):
     inv2load = pv2inv * n_inv  # AC
     pv2inv = pv2inv.values
 
-    # Excess PV
+    # Excess PVs
     res_pv = np.maximum(pv - demand / n_inv, 0)  # DC
-
-    #For the residual pv find the threshold above which the energy should be stored.
-    thresholds = {}
-    for day, res_pv_day_load in res_pv.groupby(res_pv.index.dayofyear):  # pv or pv2inv
-        thresholds[day] = find_threshold(res_pv_day_load.values, param_tech['BatteryCapacity'])
-
+    res_pv_val = res_pv.values
     Nsteps = len(demand)
     LevelOfCharge[0] = 0  # bat_size_e_adj / 2 # Initial storage is empty # DC
 
-    # Create array with hourly values
-    thresholds_hourly = [thresholds[day] for day in demand.index.dayofyear]
+    # For the residual pv find the threshold above which the energy should be stored (first day)
+    threshold = find_threshold(res_pv_val[0: 0 + int(23 / timestep)], bat_size_e_adj - LevelOfCharge[0])
 
-    for i in range(1, Nsteps):
+    for i in range(1, Nsteps):  # Loop hours
+        # Every 24 hours find the threshold for the next day (assuming next 24 hours)
+        if i % int(24/timestep) == 0:
+            threshold = find_threshold(res_pv_val[i:i + int(23 / timestep)],
+                                       bat_size_e_adj - LevelOfCharge[i])
+
         # PV to grid
-        if res_pv[i] < thresholds_hourly[i] / n_inv:  # If residual load is below threshold
+        if res_pv[i] * n_inv < threshold:  # If residual load is below threshold
             inv2grid[i] = res_pv[i] * n_inv  # Sell to grid what is not consumed
         else:  # If load is above threshold
-            inv2grid[i] = thresholds_hourly[i] * n_inv  # Sell to grid what is below the threshold
-            pv2store[i] = min(max(0, (res_pv[i] - thresholds_hourly[i]) * n_bat / n_inv),
-                              bat_size_e_adj * n_bat)  # Store what is above the threshold and fits in battery
+            inv2grid[i] = threshold * n_inv  # Sell to grid what is below the threshold
+            pv2store[i] = min(max(0, (res_pv[i] - threshold) * n_bat / n_inv),
+                              (bat_size_e_adj - LevelOfCharge[i - 1]) / timestep )  # Store what is above the threshold and fits in battery
         pv2inv[i] = pv2inv[i] + inv2grid[i] / n_inv  # DC
 
         store2inv[i] = min(bat_size_p_adj,  # DC
                            res_load[i] / n_inv,
                            LevelOfCharge[i - 1] / timestep)
 
-        # No need to check if battery is full because we have precalculated that in order to find the threshold
-
-        LevelOfCharge[i] = min(LevelOfCharge[i - 1] - (store2inv[i] - pv2store[i] - grid2store[i]) * timestep,  # DC
-                               bat_size_e_adj)
+        LevelOfCharge[i] = min(LevelOfCharge[i - 1] - (store2inv[i] - pv2store[i] - grid2store[i]) * timestep,
+                               bat_size_e_adj ) # DC
 
     inv2load = inv2load + store2inv * n_inv  # AC
     grid2load = demand - inv2load  # AC
