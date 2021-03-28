@@ -9,7 +9,7 @@ def plot_dispatch(pv, demand, E, week=30):
         E (dict):  Energy flows. Dictionary of pd.Series: res_pv, grid2load, store2inv, LevelOfCharge
     """
 
-    sliced_index = (pv.index.week==week)
+    sliced_index = (pv.index.isocalendar().week==week)
     pv_sliced = pv[sliced_index]
     demand_sliced = demand[sliced_index]
     self_consumption = E['inv2load'][sliced_index]
