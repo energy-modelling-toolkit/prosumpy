@@ -220,5 +220,3 @@ def dispatch_max_sc_grid_pf(pv, demand, param_tech, return_series=False):
         out = out_pd
     return out
 
-
-
