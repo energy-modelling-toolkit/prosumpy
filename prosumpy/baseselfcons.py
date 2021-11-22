@@ -31,7 +31,7 @@ def base_sc(pv, demand, return_series=False):
     # Storage
     store2inv = np.zeros(Nsteps)
     # Inverter
-    inv2grid = np.maximum(pv-demand,0)  # AC
+    inv2grid = np.maximum(pv_arr-demand,0)  # AC
     inv2load = pv_arr - inv2grid  # AC
     # Grid
     grid2load = demand - inv2load  # AC
@@ -47,8 +47,7 @@ def base_sc(pv, demand, return_series=False):
             'grid2load': grid2load,
             'store2inv': store2inv,
             'LevelOfCharge': LevelOfCharge,
-            'inv2grid': inv2grid
-            }
+            'inv2grid': inv2grid}
     
     if return_series:
         out_pd = {}
@@ -58,23 +57,6 @@ def base_sc(pv, demand, return_series=False):
     
     return out
 
-# demand = pd.read_csv('../tests/data/demand_example.csv', index_col=0, header=None, parse_dates=True, squeeze=True)
-# pv_1kW = pd.read_csv('../tests/data/pv_example.csv', index_col=0, header=None, parse_dates=True, squeeze=True)
-# pv = pv_1kW*10.
-
-# out = base_sc(pv, demand, return_series=False)
-
-# param_tech = {'BatteryCapacity': 20,
-#               'BatteryEfficiency': .9,
-#               'InverterEfficiency': .85,
-#               'timestep': .25,
-#               'MaxPower': 20}
-
-# demand = pd.read_csv('../tests/data/demand_example.csv', index_col=0, header=None, parse_dates=True, squeeze=True)
-# pv_1kW = pd.read_csv('../tests/data/pv_example.csv', index_col=0, header=None, parse_dates=True, squeeze=True)
-# pv = pv_1kW*10.
-
-# out = dispatch_max_sc(pv, demand,param_tech, return_series=True)
 
 
 
