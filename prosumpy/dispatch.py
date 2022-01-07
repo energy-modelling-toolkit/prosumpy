@@ -42,17 +42,19 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
     grid2store = np.zeros(Nsteps) # TODO Always zero for now.
 
     #Load served by PV
-    pv2inv = np.minimum(pv, demand / n_inv)  # DC direct self-consumption
+    pv1 =pv.to_numpy()
+    demand1 = demand.to_numpy()
+    pv2inv = np.minimum(pv1, demand1 / n_inv)  # DC direct self-consumption
 
     #Residual load
     res_load = (demand - pv2inv * n_inv)  # AC
     inv2load = pv2inv * n_inv  # AC
 
     #Excess PV
-    res_pv = np.maximum(pv - demand/n_inv, 0)  # DC
+    res_pv = np.maximum(pv1 - demand1/n_inv, 0)  # DC
 
     #PV to storage after eff losses
-    pv2inv = pv2inv.values
+    # pv2inv = pv2inv.values
 
     #first timestep = 0
     LevelOfCharge[0] = 0  # bat_size_e_adj / 2  # DC
@@ -79,7 +81,7 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
     pv2inv = pv2inv + res_pv - pv2store
     inv2load = inv2load + store2inv * n_inv  # AC
     inv2grid = (res_pv - pv2store) * n_inv  # AC
-    grid2load = demand - inv2load  # AC
+    grid2load = demand1 - inv2load  # AC
 
     #MaxDischarge = np.minimum(LevelOfCharge[i-1]*BatteryEfficiency/timestep,MaxPower)
 
@@ -97,7 +99,7 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
             'inv2grid': inv2grid
             # 'grid2store': grid2store
             }
-    if not return_series:
+    if return_series:
         out_pd = {}
         for k, v in out.items():  # Create dictionary of pandas series with same index as the input pv
             out_pd[k] = pd.Series(v, index=pv.index)
