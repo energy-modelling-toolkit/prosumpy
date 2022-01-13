@@ -104,5 +104,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# firstsim
-firstsim/
+# Autoconsommation project
+autoconsommation/data/
