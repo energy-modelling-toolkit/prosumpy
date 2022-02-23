@@ -62,10 +62,10 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
         if LevelOfCharge[i-1] >= bat_size_e_adj:  # if battery is full
                 pv2store[i] = 0
         else: #if battery is not full
-            if LevelOfCharge[i-1] + res_pv[i] * n_bat * timestep > bat_size_e_adj:  # if battery will be full after putting excess
-                pv2store[i] = min((bat_size_e_adj - LevelOfCharge[i-1]) / timestep, bat_size_p_adj)
+            if LevelOfCharge[i-1] + res_pv[i] * timestep > bat_size_e_adj:  # if battery will be full after putting excess
+                pv2store[i] = min((bat_size_e_adj - LevelOfCharge[i-1]) / timestep, bat_size_p_adj) / n_bat
             else:
-                pv2store[i] = min(res_pv[i] * n_bat, bat_size_p_adj)
+                pv2store[i] = min(res_pv[i], bat_size_p_adj)
 
         #Storage to load
         store2inv[i] = min(bat_size_p_adj,  # DC
@@ -73,7 +73,7 @@ def dispatch_max_sc(pv, demand, param, return_series=False):
                            LevelOfCharge[i-1] / timestep)
 
         #SOC
-        LevelOfCharge[i] = min(LevelOfCharge[i-1] - (store2inv[i] - pv2store[i] - grid2store[i]) * timestep,  # DC
+        LevelOfCharge[i] = min(LevelOfCharge[i-1] - (store2inv[i] - pv2store[i] *n_bat) * timestep,  # DC
                                bat_size_e_adj)
 
     pv2inv = pv2inv + res_pv - pv2store
